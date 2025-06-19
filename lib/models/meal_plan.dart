@@ -1,4 +1,6 @@
 // models/meal_plan.dart
+import 'meal.dart';
+
 class MealPlan {
   final DateTime date;
   final Meal? breakfast;
