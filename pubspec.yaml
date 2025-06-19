@@ -1,0 +1,65 @@
+name: nutrimenu
+description: A smart meal planning app that generates menus based on grocery bills
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core dependencies
+  cupertino_icons: ^1.0.6
+  
+  # State management (optional, for future expansion)
+  provider: ^6.1.1
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # Image handling
+  image_picker: ^1.0.7
+  
+  # HTTP requests (for future API integration)
+  http: ^1.1.2
+  
+  # JSON serialization
+  json_annotation: ^4.8.1
+  
+  # UI enhancements
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+  
+  # Utilities
+  intl: ^0.18.1
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+  
+  # To add assets to your application, add an assets section:
+  # assets:
+  #   - images/
+  #   - assets/icons/
+  
+  # Custom fonts (optional)
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: fonts/Poppins-Regular.ttf
+  #       - asset: fonts/Poppins-Medium.ttf
+  #         weight: 500
+  #       - asset: fonts/Poppins-SemiBold.ttf
+  #         weight: 600
+  #       - asset: fonts/Poppins-Bold.ttf
+  #         weight: 700
