@@ -9,6 +9,7 @@ import '../../services/meal_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/meal_card.dart';
 import '../../widgets/nutrition_summary.dart';
+import '../profile/edit_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -500,8 +501,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           const SizedBox(height: 32),
           CustomButton(
             text: 'Edit Profile',
-            onPressed: () {
-              // Navigate to edit profile
+            onPressed: () async {
+              final updatedProfile = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProfileScreen(
+                    userProfile: _userProfile!,
+                  ),
+                ),
+              );
+              
+              if (updatedProfile != null) {
+                setState(() {
+                  _userProfile = updatedProfile;
+                });
+              }
             },
             icon: Icons.edit,
           ),
