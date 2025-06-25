@@ -1,6 +1,7 @@
 // services/image_service.dart
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'gemini_service.dart';
 
 class ImageService {
   static final ImagePicker _picker = ImagePicker();
@@ -33,22 +34,25 @@ class ImageService {
     return null;
   }
 
+  /// Process grocery bill using Gemini AI
   static Future<List<String>> processGroceryBill(File image) async {
-    // Simulate OCR processing
-    await Future.delayed(const Duration(seconds: 3));
-    
-    // Return mock grocery items
-    return [
-      'Chicken Breast',
-      'Spinach',
-      'Tomatoes',
-      'Rice',
-      'Eggs',
-      'Milk',
-      'Bread',
-      'Avocado',
-      'Salmon',
-      'Greek Yogurt',
-    ];
+    try {
+      // Use Gemini AI to analyze the grocery bill
+      final items = await GeminiService.analyzeGroceryBill(image);
+      return items;
+    } catch (e) {
+      // If Gemini service fails, throw the error message
+      rethrow;
+    }
+  }
+
+  /// Analyze food image for nutritional information
+  static Future<Map<String, dynamic>> analyzeFoodNutrition(File image) async {
+    try {
+      final result = await GeminiService.analyzeFoodImage(image);
+      return result;
+    } catch (e) {
+      rethrow;
+    }
   }
 }

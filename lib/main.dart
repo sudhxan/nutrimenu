@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'services/storage_service.dart';
+import 'services/gemini_service.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
+  // Set preferred orientations
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  
+  // Initialize Gemini service (just to validate the API key)
+  try {
+    await GeminiService.isServiceAvailable();
+    debugPrint('Gemini AI service initialized successfully');
+  } catch (e) {
+    debugPrint('Warning: Gemini AI service initialization failed: $e');
+  }
+  
   runApp(const NutriMenuApp());
 }
 
