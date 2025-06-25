@@ -11,65 +11,62 @@ dependencies:
     sdk: flutter
 
   # Core dependencies
-  cupertino_icons: ^1.0.6
+  cupertino_icons: ^1.0.8
   
-  # State management (optional, for future expansion)
-  provider: ^6.1.1
+  # State management
+  provider: ^6.1.5
   
   # Local storage
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
   
   # Image handling
-  image_picker: ^1.0.7
+  image_picker: ^1.1.2
   
-  # HTTP requests (for future API integration)
-  http: ^1.1.2
+  # HTTP requests for Gemini API
+  http: ^1.4.0
   
   # JSON serialization
-  json_annotation: ^4.8.1
+  json_annotation: ^4.9.0
   
   # UI enhancements
   shimmer: ^3.0.0
-  cached_network_image: ^3.3.1
+  cached_network_image: ^3.4.1
   
   # Utilities
   intl: ^0.18.1
-  path_provider: ^2.1.2
-
-  # Gemini AI
-  google_generative_ai: ^0.4.6
+  path_provider: ^2.1.5
   
-  # Environment variables
-  flutter_dotenv: ^5.1.0
+  # For UUID generation
+  uuid: ^4.5.1
+  
+  # For animations and gestures
+  flutter_staggered_animations: ^1.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   
-  flutter_lints: ^3.0.1
-  build_runner: ^2.4.8
-  json_serializable: ^6.7.1
+  flutter_lints: ^3.0.2
+  build_runner: ^2.5.2
+  json_serializable: ^6.9.5
 
 flutter:
   uses-material-design: true
   
-  # Add environment file to assets
+  # Add assets for the app
   assets:
-    - .env
+    - assets/images/
+    - assets/patterns/
+    - assets/icons/
   
-  # To add assets to your application, add an assets section:
-  # assets:
-  #   - images/
-  #   - assets/icons/
-  
-  # Custom fonts (optional)
+  # Custom fonts for better UI
   # fonts:
-  #   - family: Poppins
+  #   - family: Inter
   #     fonts:
-  #       - asset: fonts/Poppins-Regular.ttf
-  #       - asset: fonts/Poppins-Medium.ttf
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #       - asset: assets/fonts/Inter-Medium.ttf
   #         weight: 500
-  #       - asset: fonts/Poppins-SemiBold.ttf
+  #       - asset: assets/fonts/Inter-SemiBold.ttf
   #         weight: 600
-  #       - asset: fonts/Poppins-Bold.ttf
+  #       - asset: assets/fonts/Inter-Bold.ttf
   #         weight: 700
