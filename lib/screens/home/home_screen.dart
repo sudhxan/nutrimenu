@@ -1,6 +1,7 @@
 // screens/home/home_screen.dart
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:ui';
 import '../../models/user_profile.dart';
 import '../../models/meal_plan.dart';
 import '../../models/recipe_card.dart';
@@ -24,7 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
+  int _currentIndex = 0; // Changed from TabController to int for bottom navigation
   UserProfile? _userProfile;
   List<MealPlan> _mealPlans = [];
   List<RecipeCard> _pendingRecipes = [];
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // Removed TabController initialization
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _tabController.dispose();
+    // Removed _tabController.dispose()
     _fabAnimationController.dispose();
     super.dispose();
   }
@@ -179,41 +180,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return _mealPlans.first.totalCalories;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            if (_userProfile != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: NutritionSummary(
-                  currentProtein: _calculateTodayProtein(),
-                  targetProtein: _userProfile!.proteinGoal,
-                  calories: _calculateTodayCalories(),
-                ),
-              ),
-            const SizedBox(height: 20),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildDashboardTab(),
-                  _buildMealPlanTab(),
-                  _buildProfileTab(),
-                ],
-              ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: SafeArea(
+      child: Column(
+        children: [
+          // Removed _buildHeader() and NutritionSummary from here
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: [
+                _buildDashboardTab(),
+                _buildMealPlanTab(),
+                _buildProfileTab(),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButton: _buildFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
-  }
+    ),
+    // Only show FAB on dashboard tab (index 0)
+    floatingActionButton: _currentIndex == 0 
+        ? Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: _buildFloatingActionButton(),
+          )
+        : null,
+    floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    bottomNavigationBar: _buildStyledBottomNavigation(),
+  );
+}
 
   Widget _buildHeader() {
     return Padding(
@@ -259,163 +256,222 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: Theme.of(context).primaryColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey.shade600,
-        tabs: const [
-          Tab(text: 'Dashboard'),
-          Tab(text: 'Meal Plan'),
-          Tab(text: 'Profile'),
-        ],
-      ),
-    );
-  }
+  // Removed _buildTabBar() method
 
-  Widget _buildFloatingActionButton() {
-    return AnimatedBuilder(
-      animation: _fabAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _fabAnimation.value,
-          child: Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
+Widget _buildFloatingActionButton() {
+  return AnimatedBuilder(
+    animation: _fabAnimation,
+    builder: (context, child) {
+      return Transform.scale(
+        scale: _fabAnimation.value,
+        child: Container(
+          width: 160,
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withOpacity(0.8),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _isProcessingImage ? null : _showUploadOptions,
-                borderRadius: BorderRadius.circular(40),
-                child: _isProcessingImage 
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isProcessingImage ? null : _showUploadOptions,
+              borderRadius: BorderRadius.circular(28),
+              child: _isProcessingImage
                   ? const Center(
-                      child: SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Processing...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     )
-                  : const Icon(
-                      Icons.add,
-                      size: 32,
-                      color: Colors.white,
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 68,
+                          height: 68,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: Image.asset(
+                              'assets/gifs/cooking_animation.gif', // Path to your GIF
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 40),
+                        const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-              ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _buildDashboardTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_acceptedRecipes.isNotEmpty) ...[
-            const Text(
-              'Your Accepted Recipes',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 220, // Increased height to prevent overflow
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _acceptedRecipes.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 160,
-                    margin: const EdgeInsets.only(right: 12),
-                    child: GestureDetector(
-                      onTap: () => _showRecipeDetails(_acceptedRecipes[index]),
-                      child: _buildRecipePreview(_acceptedRecipes[index]),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
+          // Header - ONLY in Dashboard, ONLY ONCE
+          _buildHeader(),
           
-          if (_mealPlans.isEmpty) ...[
-            Center(
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.restaurant_menu,
-                    size: 100,
-                    color: Colors.grey.shade300,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'No meal plans yet',
+          // Nutrition Summary - ONLY in Dashboard
+          if (_userProfile != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: NutritionSummary(
+                currentProtein: _calculateTodayProtein(),
+                targetProtein: _userProfile!.proteinGoal,
+                calories: _calculateTodayCalories(),
+              ),
+            ),
+          
+          const SizedBox(height: 20),
+          
+          // Dashboard content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_acceptedRecipes.isNotEmpty) ...[
+                  const Text(
+                    'Your Accepted Recipes',
                     style: TextStyle(
                       fontSize: 20,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the + button to upload your grocery bill\nor refrigerator photo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _acceptedRecipes.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: 160,
+                          margin: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => _showRecipeDetails(_acceptedRecipes[index]),
+                            child: _buildRecipePreview(_acceptedRecipes[index]),
+                          ),
+                        );
+                      },
                     ),
-                    textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 32),
                 ],
-              ),
+                
+                if (_mealPlans.isEmpty) ...[
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu,
+                          size: 100,
+                          color: Colors.grey.shade300,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'No meal plans yet',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap the + button to upload your grocery bill\nor refrigerator photo',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  const Text(
+                    'Today\'s Meals',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ..._buildTodaysMeals(),
+                ],
+                const SizedBox(height: 100), // Extra bottom padding for FAB
+              ],
             ),
-          ] else ...[
-            const Text(
-              'Today\'s Meals',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ..._buildTodaysMeals(),
-          ],
+          ),
         ],
       ),
     );
@@ -611,69 +667,104 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildMealPlanTab() {
-    if (_mealPlans.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today,
-              size: 80,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No meal plans yet',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey.shade600,
+    return Column(
+      children: [
+        // Clean header for Meal Plan tab (different from dashboard header)
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              const Text(
+                'Meal Plans',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Upload your groceries to get started',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
+              const Spacer(),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.calendar_today,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: _mealPlans.length,
-      itemBuilder: (context, index) {
-        final plan = _mealPlans[index];
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _formatDate(plan.date),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        
+        // Content
+        Expanded(
+          child: _mealPlans.isEmpty 
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 80,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No meal plans yet',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Upload your groceries to get started',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _mealPlans.length,
+                itemBuilder: (context, index) {
+                  final plan = _mealPlans[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _formatDate(plan.date),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (plan.breakfast != null) ...[
+                        MealCard(meal: plan.breakfast!),
+                        const SizedBox(height: 12),
+                      ],
+                      if (plan.lunch != null) ...[
+                        MealCard(meal: plan.lunch!),
+                        const SizedBox(height: 12),
+                      ],
+                      if (plan.dinner != null) ...[
+                        MealCard(meal: plan.dinner!),
+                        const SizedBox(height: 12),
+                      ],
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 16),
-            if (plan.breakfast != null) ...[
-              MealCard(meal: plan.breakfast!),
-              const SizedBox(height: 12),
-            ],
-            if (plan.lunch != null) ...[
-              MealCard(meal: plan.lunch!),
-              const SizedBox(height: 12),
-            ],
-            if (plan.dinner != null) ...[
-              MealCard(meal: plan.dinner!),
-              const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 24),
-          ],
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -683,72 +774,110 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person,
-              size: 50,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildProfileItem(
-            'Height',
-            '${_userProfile!.height} ${_userProfile!.isMetric ? 'cm' : 'ft'}',
-            Icons.height,
-          ),
-          _buildProfileItem(
-            'Weight',
-            '${_userProfile!.weight} ${_userProfile!.isMetric ? 'kg' : 'lbs'}',
-            Icons.monitor_weight,
-          ),
-          _buildProfileItem(
-            'Daily Protein Goal',
-            '${_userProfile!.proteinGoal}g',
-            Icons.fitness_center,
-          ),
-          const SizedBox(height: 24),
-          _buildProfileSection(
-            'Favorite Cuisines',
-            _userProfile!.cuisines,
-            Icons.restaurant,
-          ),
-          if (_userProfile!.restrictions.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _buildProfileSection(
-              'Dietary Restrictions',
-              _userProfile!.restrictions,
-              Icons.no_meals,
-            ),
-          ],
-          const SizedBox(height: 32),
-          CustomButton(
-            text: 'Edit Profile',
-            onPressed: () async {
-              final updatedProfile = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditProfileScreen(
-                    userProfile: _userProfile!,
+          // Simple header for Profile tab
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                const Text(
+                  'Profile',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              );
-              
-              if (updatedProfile != null) {
-                setState(() {
-                  _userProfile = updatedProfile;
-                });
-              }
-            },
-            icon: Icons.edit,
+                const Spacer(),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.settings,
+                    color: Theme.of(context).primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Profile content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 50,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildProfileItem(
+                  'Height',
+                  '${_userProfile!.height} ${_userProfile!.isMetric ? 'cm' : 'ft'}',
+                  Icons.height,
+                ),
+                _buildProfileItem(
+                  'Weight',
+                  '${_userProfile!.weight} ${_userProfile!.isMetric ? 'kg' : 'lbs'}',
+                  Icons.monitor_weight,
+                ),
+                _buildProfileItem(
+                  'Daily Protein Goal',
+                  '${_userProfile!.proteinGoal}g',
+                  Icons.fitness_center,
+                ),
+                const SizedBox(height: 24),
+                _buildProfileSection(
+                  'Favorite Cuisines',
+                  _userProfile!.cuisines,
+                  Icons.restaurant,
+                ),
+                if (_userProfile!.restrictions.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildProfileSection(
+                    'Dietary Restrictions',
+                    _userProfile!.restrictions,
+                    Icons.no_meals,
+                  ),
+                ],
+                const SizedBox(height: 32),
+                CustomButton(
+                  text: 'Edit Profile',
+                  onPressed: () async {
+                    final updatedProfile = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditProfileScreen(
+                          userProfile: _userProfile!,
+                        ),
+                      ),
+                    );
+                    
+                    if (updatedProfile != null) {
+                      setState(() {
+                        _userProfile = updatedProfile;
+                      });
+                    }
+                  },
+                  icon: Icons.edit,
+                ),
+                const SizedBox(height: 20), // Bottom padding
+              ],
+            ),
           ),
         ],
       ),
@@ -830,6 +959,171 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStyledBottomNavigation() {
+    return Container(
+      height: 65, // Further reduced height
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        // Glassmorphism effect with transparency
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.9),
+                  Colors.white.withOpacity(0.7),
+                ],
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Further reduced padding
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  icon: Icons.dashboard_outlined,
+                  activeIcon: Icons.dashboard,
+                  label: 'Dashboard',
+                  index: 0,
+                ),
+                _buildNavItem(
+                  icon: Icons.restaurant_menu_outlined,
+                  activeIcon: Icons.restaurant_menu,
+                  label: 'Meal Plan',
+                  index: 1,
+                ),
+                _buildNavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  label: 'Profile',
+                  index: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+  }) {
+    final isActive = _currentIndex == index;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // Minimal padding
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor.withOpacity(0.2),
+                    Theme.of(context).primaryColor.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(12),
+          border: isActive
+              ? Border.all(
+                  color: Theme.of(context).primaryColor.withOpacity(0.4),
+                  width: 1,
+                )
+              : null,
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(4), // Minimal icon padding
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Theme.of(context).primaryColor
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: Theme.of(context).primaryColor.withOpacity(0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isActive ? activeIcon : icon,
+                  key: ValueKey(isActive),
+                  color: isActive ? Colors.white : Colors.grey.shade600,
+                  size: 18, // Smaller icon size
+                ),
+              ),
+            ),
+            const SizedBox(height: 1), // Minimal spacing
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: isActive ? 10 : 9, // Even smaller text
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey.shade600,
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
       ),
     );
   }

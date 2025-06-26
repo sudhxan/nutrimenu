@@ -56,6 +56,8 @@ flutter:
   # Add assets for the app
   assets:
     - assets/images/
+    - assets/gifs/
+    - assets/gifs/cooking_animation.gif
     - assets/patterns/
     - assets/icons/
   
